@@ -8,19 +8,19 @@ func main() {
 
 	_, err := fmt.Scan(&a)
 	if err != nil {
-		fmt.Print("Invalid first operand")
+		fmt.Println("Invalid first operand")
 		return
 	}
 
 	_, err = fmt.Scan(&b)
 	if err != nil {
-		fmt.Print("Invalid second operand")
+		fmt.Println("Invalid second operand")
 		return
 	}
 
 	_, err = fmt.Scan(&op)
 	if err != nil {
-		fmt.Print("Invalid operation")
+		fmt.Println("Invalid operation")
 		return
 	}
 
