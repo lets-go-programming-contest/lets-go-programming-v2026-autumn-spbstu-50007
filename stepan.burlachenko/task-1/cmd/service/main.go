@@ -2,29 +2,29 @@ package main
 
 import "fmt"
 
-func main(){
+func main() {
 	var a, b int
 	var op string
 
 	_, err := fmt.Scan(&a)
-	if err != nil{
+	if err != nil {
 		fmt.Print("Invalid first operand")
 		return
 	}
 
 	_, err = fmt.Scan(&b)
-	if err != nil{
+	if err != nil {
 		fmt.Print("Invalid second operand")
 		return
 	}
 
 	_, err = fmt.Scan(&op)
-	if err != nil{
+	if err != nil {
 		fmt.Print("Invalid operation")
 		return
 	}
 
-	switch op{
+	switch op {
 	case "+":
 		fmt.Println(a + b)
 	case "-":
@@ -32,9 +32,9 @@ func main(){
 	case "*":
 		fmt.Println(a * b)
 	case "/":
-		if b == 0{
+		if b == 0 {
 			fmt.Println("Division by zero")
-		}else{
+		} else {
 			fmt.Println(a / b)
 		}
 	default:
