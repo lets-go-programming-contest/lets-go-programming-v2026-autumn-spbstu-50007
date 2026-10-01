@@ -1,7 +1,31 @@
-.ci_common
+# Скомпилированные бинарники
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+task-1
 
-.idea
-.vscode
+# Тестовые файлы
+*.test
+*.out
 
-bin
-tmp
+# Папка сборки
+bin/
+build/
+
+# Зависимости 
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Локальные настройки
+.env
