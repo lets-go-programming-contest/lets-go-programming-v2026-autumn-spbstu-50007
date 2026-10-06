@@ -40,10 +40,11 @@ func main() {
 		if b == 0 {
 			fmt.Println("Division by zero")
 			return
+		} else {
+			x = a / b
+			fmt.Println(x)
 		}
 
-		x = a / b
-		fmt.Println(x)
 	default:
 		fmt.Println("Invalid operation")
 	}
