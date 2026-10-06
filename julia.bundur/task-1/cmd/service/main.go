@@ -27,16 +27,16 @@ func main() {
 	}
 
 	switch operand {
-	case ("+"):
+	case "+":
 		x = a + b
 		fmt.Println(x)
-	case ("-"):
+	case "-":
 		x = a - b
 		fmt.Println(x)
-	case ("*"):
+	case "*":
 		x = a * b
 		fmt.Println(x)
-	case ("/"):
+	case "/":
 		if b == 0 {
 			fmt.Println("Division by zero")
 			return
