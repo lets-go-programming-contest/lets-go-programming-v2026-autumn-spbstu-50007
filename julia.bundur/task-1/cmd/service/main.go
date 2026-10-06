@@ -12,17 +12,17 @@ func main() {
 
 	_, err := fmt.Scanln(&a)
 	if err != nil {
-		fmt.Println("Invalid first operator", err)
+		fmt.Println("Invalid first operator")
 		return
 	}
 	_, err = fmt.Scanln(&b)
 	if err != nil {
-		fmt.Println("Invalid second operator", err)
+		fmt.Println("Invalid second operator")
 		return
 	}
 	_, err = fmt.Scanln(&operand)
 	if err != nil {
-		fmt.Println("Invalid operation", err)
+		fmt.Println("Invalid operation")
 		return
 	}
 
