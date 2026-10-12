@@ -8,49 +8,64 @@ func main() {
 	_, err := fmt.Scan(&departments)
 	if err != nil || departments < 1 || departments > 1000 {
 		fmt.Println("Invalid number of departments")
+
 		return
 	}
 
-	for i := 0; i < departments; i++ {
-		var workers int
-
-		_, err = fmt.Scan(&workers)
-		if err != nil || workers < 1 || workers > 1000 {
-			fmt.Println("Invalid number of employees")
+	for range departments {
+		if !processDepartment() {
 			return
 		}
+	}
+}
 
-		lowest := 15
-		highest := 30
+func processDepartment() bool {
+	var employees int
 
-		for j := 0; j < workers; j++ {
-			var sign string
-			var temperature int
+	_, err := fmt.Scan(&employees)
+	if err != nil || employees < 1 || employees > 1000 {
+		fmt.Println("Invalid number of employees")
 
-			_, err = fmt.Scan(&sign, &temperature)
-			if err != nil {
-				fmt.Println("Invalid temperature requirement")
-				return
+		return false
+	}
+
+	lowest := 15
+	highest := 30
+
+	for range employees {
+		var (
+			sign        string
+			temperature int
+		)
+
+		_, err = fmt.Scan(&sign, &temperature)
+		if err != nil {
+			fmt.Println("Invalid temperature requirement")
+
+			return false
+		}
+
+		switch sign {
+		case ">=":
+			if temperature > lowest {
+				lowest = temperature
 			}
-
-			if sign == ">=" {
-				if temperature > lowest {
-					lowest = temperature
-				}
-			} else if sign == "<=" {
-				if temperature < highest {
-					highest = temperature
-				}
-			} else {
-				fmt.Println("Invalid operator")
-				return
+		case "<=":
+			if temperature < highest {
+				highest = temperature
 			}
+		default:
+			fmt.Println("Invalid operator")
 
-			if lowest > highest {
-				fmt.Println(-1)
-			} else {
-				fmt.Println(lowest)
-			}
+			return false
+		}
+
+		if lowest > highest {
+			fmt.Println(-1)
+		} else {
+			fmt.Println(lowest)
 		}
 	}
+
+	return true
 }
