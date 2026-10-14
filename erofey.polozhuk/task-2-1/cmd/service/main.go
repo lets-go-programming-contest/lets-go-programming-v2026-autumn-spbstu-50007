@@ -21,11 +21,12 @@ func alogosNeMnogoIf() int {
 			fmt.Println("Invalid temperature requirement")
 			return 1
 		}
-		if operat == ">=" {
+		switch operat {
+		case ">=":
 			low = max(low, temp)
-		} else if operat == "<=" {
+		case "<=":
 			high = min(high, temp)
-		} else {
+		default:
 			fmt.Println("Invalid operator")
 			return 1
 		}
