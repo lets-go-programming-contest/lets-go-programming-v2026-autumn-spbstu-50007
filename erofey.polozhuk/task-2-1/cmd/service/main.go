@@ -4,40 +4,54 @@ import (
 	"fmt"
 )
 
+func alogosNeMnogoIf() int {
+	var empl int
+	low := 15
+	high := 30
+	_, err := fmt.Scanln(&empl)
+	if err != nil || empl < 1 || empl > 1000 {
+		fmt.Println("Invalid number of employees")
+		return 1
+	}
+	for range empl {
+		var operat string
+		var temp int
+		_, err = fmt.Scanln(&operat, &temp)
+		if err != nil {
+			fmt.Println("Invalid temperature requirement")
+			return 1
+		}
+		if operat == ">=" {
+			low = max(low, temp)
+		} else if operat == "<=" {
+			high = min(high, temp)
+		} else {
+			fmt.Println("Invalid operator")
+			return 1
+		}
+		if low > high {
+			fmt.Println(-1)
+		} else {
+			fmt.Println(low)
+		}
+	}
+
+	return 0
+}
+
 func main() {
-	var n int
-	_, err := fmt.Scan(&n)
-	if err != nil || n < 1 || n > 1000 {
+	var deprt int
+	_, err := fmt.Scanln(&deprt)
+	if err != nil || deprt < 1 || deprt > 1000 {
 		fmt.Println("Invalid number of departments")
+
 		return
 	}
-	for range n {
-		var k int
-		_, err := fmt.Scan(&k)
-		if err != nil || k < 1 || k > 1000 {
-			fmt.Println("Invalid number of employees")
+	for range deprt {
+		if alogosNeMnogoIf() != 0 {
 			return
 		}
-		var temp int
-		var operator string
-		le, ri := 15, 30
-		for range k {
-			_, err := fmt.Scan(&operator, &temp)
-			if err != nil {
-				fmt.Println("Invalid temperature requirement")
-				return
-			}
-			switch operator {
-			case ">=":
-				le = max(le, temp)
-			case "<=":
-				ri = min(ri, temp)
-			}
-			if le <= ri {
-				fmt.Println(le)
-			} else {
-				fmt.Println(-1)
-			}
-		}
 	}
+	
 }
+
