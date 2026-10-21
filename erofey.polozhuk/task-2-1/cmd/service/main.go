@@ -1,19 +1,27 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
-func alogosNeMnogoIf() int {
+var (
+	ErrInvalidEmployees = errors.New("invalid number of employees")
+	ErrInvalidOperator  = errors.New("invalid operator")
+)
+
+func departmentProcess() error {
 	var empl int
 
 	low := 15
 	high := 30
 
-	if _, err := fmt.Scan(&empl); err != nil || empl < 1 || empl > 1000 {
-		fmt.Println("Invalid number of employees")
+	if _, err := fmt.Scan(&empl); err != nil {
+		return fmt.Errorf("reading employees count: %w", err)
+	}
 
-		return 1
+	if empl < 1 || empl > 1000 {
+		return fmt.Errorf("%w: %d", ErrInvalidEmployees, empl)
 	}
 
 	for range empl {
@@ -23,9 +31,7 @@ func alogosNeMnogoIf() int {
 		)
 
 		if _, err := fmt.Scan(&operat, &temp); err != nil {
-			fmt.Println("Invalid temperature requirement")
-
-			return 1
+			return fmt.Errorf("invalid temperature requirement: %w", err)
 		}
 
 		switch operat {
@@ -34,9 +40,7 @@ func alogosNeMnogoIf() int {
 		case "<=":
 			high = min(high, temp)
 		default:
-			fmt.Println("Invalid operator")
-
-			return 1
+			return fmt.Errorf("%w: %s", ErrInvalidOperator, operat)
 		}
 
 		if low > high {
@@ -46,20 +50,28 @@ func alogosNeMnogoIf() int {
 		}
 	}
 
-	return 0
+	return nil
 }
 
 func main() {
 	var deprt int
 
-	if _, err := fmt.Scan(&deprt); err != nil || deprt < 1 || deprt > 1000 {
-		fmt.Println("Invalid number of departments")
+	if _, err := fmt.Scan(&deprt); err != nil {
+		fmt.Println("reading departments count:", err)
+
+		return
+	}
+
+	if deprt < 1 || deprt > 1000 {
+		fmt.Println("invalid number of departments")
 
 		return
 	}
 
 	for range deprt {
-		if alogosNeMnogoIf() != 0 {
+		if err := departmentProcess(); err != nil {
+			fmt.Println(err)
+
 			return
 		}
 	}
