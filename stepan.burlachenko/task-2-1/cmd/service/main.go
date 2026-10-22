@@ -6,30 +6,27 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 )
 
 var (
-	ErrFailedToReadLine = errors.New("failed to read line")
-	ErrFailedToCutLine  = errors.New("ailed to cut line")
+	ErrFailedToReadLine = errors.New("failed to read token")
 )
 
 func entryData(scanner *bufio.Scanner) (int, int, error) {
 	if !scanner.Scan() {
 		return -1, -1, ErrFailedToReadLine
 	}
-
-	line := scanner.Text()
-
-	nTemp, kTemp, success := strings.Cut(line, " ")
-	if !success {
-		return -1, -1, ErrFailedToCutLine
-	}
+	nTemp := scanner.Text()
 
 	departmentsCount, err := strconv.Atoi(nTemp)
 	if err != nil {
 		return -1, -1, fmt.Errorf("failed to parse departments count: %w", err)
 	}
+
+	if !scanner.Scan() {
+		return -1, -1, ErrFailedToReadLine
+	}
+	kTemp := scanner.Text()
 
 	employeesPerDepartment, err := strconv.Atoi(kTemp)
 	if err != nil {
@@ -47,17 +44,12 @@ func processDepartment(scanner *bufio.Scanner, employeesPerDepartment int) {
 		if !scanner.Scan() {
 			break
 		}
+		operator := scanner.Text()
 
-		line := scanner.Text()
-
-		operator, numStr, success := strings.Cut(line, " ")
-		if !success {
-			fmt.Println("-1")
-
-			continue
+		if !scanner.Scan() {
+			break
 		}
-
-		temp, err := strconv.Atoi(numStr)
+		temp, err := strconv.Atoi(scanner.Text())
 		if err != nil {
 			fmt.Println("-1")
 
@@ -80,17 +72,16 @@ func processDepartment(scanner *bufio.Scanner, employeesPerDepartment int) {
 		}
 
 		if minTemp > maxTemp {
-			fmt.Print("-1 ")
+			fmt.Println("-1")
 		} else {
-			fmt.Print(minTemp, " ")
+			fmt.Println(minTemp)
 		}
 	}
-
-	fmt.Println()
 }
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Split(bufio.ScanWords)
 
 	departmentsCount, employeesPerDepartment, err := entryData(scanner)
 	if err != nil {
