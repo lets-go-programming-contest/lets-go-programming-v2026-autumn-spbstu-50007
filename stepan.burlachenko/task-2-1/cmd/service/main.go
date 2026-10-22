@@ -14,7 +14,6 @@ func processDepartment(scanner *bufio.Scanner, numEmployees int) {
 
 	for range numEmployees {
 		operator, value, ok := readConstraint(scanner)
-
 		if !ok {
 			break
 		}
@@ -45,8 +44,7 @@ func readConstraint(scanner *bufio.Scanner) (string, int, bool) {
 
 	token := scanner.Text()
 
-	var operator string
-	var valStr string
+	var operator, valStr string
 
 	switch {
 	case strings.HasPrefix(token, ">="):
@@ -68,7 +66,6 @@ func readConstraint(scanner *bufio.Scanner) (string, int, bool) {
 	}
 
 	value, err := strconv.Atoi(valStr)
-
 	if err != nil {
 		return "", 0, false
 	}
@@ -78,7 +75,6 @@ func readConstraint(scanner *bufio.Scanner) (string, int, bool) {
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-
 	scanner.Split(bufio.ScanWords)
 
 	if !scanner.Scan() {
@@ -86,7 +82,6 @@ func main() {
 	}
 
 	numDepartments, err := strconv.Atoi(scanner.Text())
-
 	if err != nil {
 		return
 	}
@@ -97,7 +92,6 @@ func main() {
 		}
 
 		numEmployees, err := strconv.Atoi(scanner.Text())
-
 		if err != nil {
 			break
 		}
