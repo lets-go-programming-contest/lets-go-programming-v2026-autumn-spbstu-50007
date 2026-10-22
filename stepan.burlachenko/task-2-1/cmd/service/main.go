@@ -8,34 +8,67 @@ import (
 	"strings"
 )
 
+func processDepartment(scanner *bufio.Scanner, numEmployees int) {
+	minTemp := 15
+	maxTemp := 30
+
+	for range numEmployees {
+		operator, value, ok := readConstraint(scanner)
+
+		if !ok {
+			break
+		}
+
+		switch operator {
+		case ">=":
+			if value > minTemp {
+				minTemp = value
+			}
+		case "<=":
+			if value < maxTemp {
+				maxTemp = value
+			}
+		}
+
+		if minTemp > maxTemp {
+			fmt.Println("-1")
+		} else {
+			fmt.Println(minTemp)
+		}
+	}
+}
+
 func readConstraint(scanner *bufio.Scanner) (string, int, bool) {
 	if !scanner.Scan() {
 		return "", 0, false
 	}
+
 	token := scanner.Text()
 
 	var operator string
 	var valStr string
 
-	if strings.HasPrefix(token, ">=") {
+	switch {
+	case strings.HasPrefix(token, ">="):
 		operator = ">="
 		valStr = strings.TrimPrefix(token, ">=")
-	} else if strings.HasPrefix(token, "<=") {
+	case strings.HasPrefix(token, "<="):
 		operator = "<="
 		valStr = strings.TrimPrefix(token, "<=")
-	} else {
+	default:
 		operator = token
-		valStr = ""
 	}
 
 	if valStr == "" {
 		if !scanner.Scan() {
 			return "", 0, false
 		}
+
 		valStr = scanner.Text()
 	}
 
 	value, err := strconv.Atoi(valStr)
+
 	if err != nil {
 		return "", 0, false
 	}
@@ -45,6 +78,7 @@ func readConstraint(scanner *bufio.Scanner) (string, int, bool) {
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
+
 	scanner.Split(bufio.ScanWords)
 
 	if !scanner.Scan() {
@@ -52,43 +86,22 @@ func main() {
 	}
 
 	numDepartments, err := strconv.Atoi(scanner.Text())
+
 	if err != nil {
 		return
 	}
 
-	for i := 0; i < numDepartments; i++ {
+	for range numDepartments {
 		if !scanner.Scan() {
 			break
 		}
+
 		numEmployees, err := strconv.Atoi(scanner.Text())
+
 		if err != nil {
 			break
 		}
 
-		minTemp := 15
-		maxTemp := 30
-
-		for j := 0; j < numEmployees; j++ {
-			operator, value, ok := readConstraint(scanner)
-			if !ok {
-				break
-			}
-
-			if operator == ">=" {
-				if value > minTemp {
-					minTemp = value
-				}
-			} else if operator == "<=" {
-				if value < maxTemp {
-					maxTemp = value
-				}
-			}
-
-			if minTemp > maxTemp {
-				fmt.Println("-1")
-			} else {
-				fmt.Println(minTemp)
-			}
-		}
+		processDepartment(scanner, numEmployees)
 	}
 }
