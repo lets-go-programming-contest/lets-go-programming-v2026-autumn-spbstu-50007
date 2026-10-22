@@ -8,6 +8,41 @@ import (
 	"strings"
 )
 
+func readConstraint(scanner *bufio.Scanner) (string, int, bool) {
+	if !scanner.Scan() {
+		return "", 0, false
+	}
+	token := scanner.Text()
+
+	var operator string
+	var valStr string
+
+	if strings.HasPrefix(token, ">=") {
+		operator = ">="
+		valStr = strings.TrimPrefix(token, ">=")
+	} else if strings.HasPrefix(token, "<=") {
+		operator = "<="
+		valStr = strings.TrimPrefix(token, "<=")
+	} else {
+		operator = token
+		valStr = ""
+	}
+
+	if valStr == "" {
+		if !scanner.Scan() {
+			return "", 0, false
+		}
+		valStr = scanner.Text()
+	}
+
+	value, err := strconv.Atoi(valStr)
+	if err != nil {
+		return "", 0, false
+	}
+
+	return operator, value, true
+}
+
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(bufio.ScanWords)
@@ -16,69 +51,43 @@ func main() {
 		return
 	}
 
-	n, err := strconv.Atoi(scanner.Text())
+	numDepartments, err := strconv.Atoi(scanner.Text())
 	if err != nil {
 		return
 	}
 
-	if !scanner.Scan() {
-		return
-	}
+	for i := 0; i < numDepartments; i++ {
+		if !scanner.Scan() {
+			break
+		}
+		numEmployees, err := strconv.Atoi(scanner.Text())
+		if err != nil {
+			break
+		}
 
-	k, err := strconv.Atoi(scanner.Text())
-	if err != nil {
-		return
-	}
+		minTemp := 15
+		maxTemp := 30
 
-	for range n {
-		minT := 15
-		maxT := 30
-
-		for range k {
-			if !scanner.Scan() {
+		for j := 0; j < numEmployees; j++ {
+			operator, value, ok := readConstraint(scanner)
+			if !ok {
 				break
 			}
 
-			op := scanner.Text()
-			valStr := ""
-
-			if strings.HasPrefix(op, ">=") {
-				valStr = op[2:]
-				op = ">="
-			} else if strings.HasPrefix(op, "<=") {
-				valStr = op[2:]
-				op = "<="
-			}
-
-			if valStr == "" {
-				if !scanner.Scan() {
-					break
+			if operator == ">=" {
+				if value > minTemp {
+					minTemp = value
 				}
-
-				valStr = scanner.Text()
-			}
-
-			val, err := strconv.Atoi(valStr)
-			if err != nil {
-				fmt.Println("-1")
-
-				continue
-			}
-
-			if op == ">=" {
-				if val > minT {
-					minT = val
-				}
-			} else if op == "<=" {
-				if val < maxT {
-					maxT = val
+			} else if operator == "<=" {
+				if value < maxTemp {
+					maxTemp = value
 				}
 			}
 
-			if minT > maxT {
+			if minTemp > maxTemp {
 				fmt.Println("-1")
 			} else {
-				fmt.Println(minT)
+				fmt.Println(minTemp)
 			}
 		}
 	}
