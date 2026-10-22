@@ -15,8 +15,7 @@ func entryData(scanner *bufio.Scanner) (int, int, error) {
 		return -1, -1, ErrFailedToReadLine
 	}
 
-	nTemp := scanner.Text()
-	departmentsCount, err := strconv.Atoi(nTemp)
+	departmentsCount, err := strconv.Atoi(scanner.Text())
 	if err != nil {
 		return -1, -1, fmt.Errorf("failed to parse departments count: %w", err)
 	}
@@ -25,8 +24,7 @@ func entryData(scanner *bufio.Scanner) (int, int, error) {
 		return -1, -1, ErrFailedToReadLine
 	}
 
-	kTemp := scanner.Text()
-	employeesPerDepartment, err := strconv.Atoi(kTemp)
+	employeesPerDepartment, err := strconv.Atoi(scanner.Text())
 	if err != nil {
 		return -1, -1, fmt.Errorf("failed to parse employees count: %w", err)
 	}
@@ -74,7 +72,7 @@ func processDepartment(scanner *bufio.Scanner, employeesPerDepartment int) {
 		if minTemp > maxTemp {
 			fmt.Println("-1")
 		} else {
-			fmt.Println(temp)
+			fmt.Println(minTemp)
 		}
 	}
 }
