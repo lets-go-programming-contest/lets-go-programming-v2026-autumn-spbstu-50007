@@ -1,3 +1,3 @@
 module github.com/uliabundur90-code/task-2-1
 
-go 1.27.1
+go 1.22
