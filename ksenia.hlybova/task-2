@@ -1,0 +1,43 @@
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	var n, k int
+	fmt.Scan(&n, &k)
+
+	validTemps := make([]bool, 31)
+	for i := 15; i <= 30; i++ {
+		validTemps[i] = true
+	}
+
+	low := 15
+	high := 30
+
+	for i := 0; i < n*k; i++ {
+		var sign string
+		var temp int
+		fmt.Scan(&sign, &temp)
+
+		if sign == ">=" {
+			if temp > low {
+				low = temp
+			}
+		} else if sign == "<=" {
+			if temp < high {
+				high = temp
+			}
+		}
+
+		optimal := -1
+		for t := low; t <= high; t++ {
+			if validTemps[t] {
+				optimal = t
+				break
+			}
+		}
+		fmt.Println(optimal)
+	}
+}
