@@ -8,44 +8,60 @@ import (
 	"strings"
 )
 
+const (
+	bufferSize = 1024 * 1024
+	minLimit   = 15
+	maxLimit   = 30
+)
+
 func main() {
 	writer := bufio.NewWriter(os.Stdout)
-	defer writer.Flush()
+
+	defer func() {
+		_ = writer.Flush()
+	}()
+
 	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+	scanner.Buffer(make([]byte, bufferSize), bufferSize)
 	scanner.Split(bufio.ScanWords)
+
 	next := func() string {
 		scanner.Scan()
+
 		return scanner.Text()
 	}
+
 	depts, _ := strconv.Atoi(next())
-	for i := 0; i < depts; i++ {
+
+	for range depts {
 		staff, _ := strconv.Atoi(next())
-		minTemp := 15
-		maxTemp := 30
-		for j := 0; j < staff; j++ {
+		minTemp := minLimit
+		maxTemp := maxLimit
+
+		for range staff {
 			sign := next()
+
 			var numText string
+
 			if sign == ">=" || sign == "<=" {
 				numText = next()
 			} else {
 				numText = sign[2:]
 				sign = sign[:2]
 			}
+
 			temp, _ := strconv.Atoi(strings.TrimSpace(numText))
+
 			if sign == ">=" {
-				if temp > minTemp {
-					minTemp = temp
-				}
+				minTemp = max(minTemp, temp)
 			} else {
-				if temp < maxTemp {
-					maxTemp = temp
-				}
+				maxTemp = min(maxTemp, temp)
 			}
+
 			if minTemp > maxTemp {
-				fmt.Fprintln(writer, -1)
+				_, _ = fmt.Fprintln(writer, -1)
 			} else {
-				fmt.Fprintln(writer, minTemp)
+				_, _ = fmt.Fprintln(writer, minTemp)
 			}
 		}
 	}
