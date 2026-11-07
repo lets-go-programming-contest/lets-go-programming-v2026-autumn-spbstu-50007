@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/xml"
 	"flag"
-	"os"
+	"bytes"
 	"fmt"
+	"os"
+	"golang.org/x/net/html/charset"
 	"gopkg.in/yaml.v3"
 )
 
@@ -13,19 +16,41 @@ type Config struct{
 	
 }
 
+type Valute struct{
+	NumCode string `xml:"NumCode"`
+	CharCode string `xml:"CharCode"`
+	Nominal float64 `xml:"Nominal"`
+	Name string	`xml:"Name"`
+	Value string `xml:"Value"`
+}
+type ValCurs struct{
+	Valutbl []Valute `xml:"Valute"`
+}
 
 func main(){
 	whatAflag := flag.String("config", "config.yaml", "path file")
 	flag.Parse()
-	readFile, err := os.ReadFile(*whatAflag) 
+	readFileYaml, err := os.ReadFile(*whatAflag) 
 	if err != nil {
 		panic(err)
 	}
 	var config Config
-	unmarerr:= yaml.Unmarshal(readFile, &config)
+	unmarerr:= yaml.Unmarshal(readFileYaml, &config)
 	if unmarerr!=nil{
 		panic(unmarerr)
 	}
-	fmt.Println(config.InputFile,config.OutputFile)
+	readFileXml, errXml := os.ReadFile(config.InputFile)
+	if errXml!=nil {
+		panic(errXml)
+	}
+	decodeOldWinEncod := xml.NewDecoder(bytes.NewReader(readFileXml))
+	decodeOldWinEncod.CharsetReader = charset.NewReaderLabel
+	var valCurs ValCurs 
+	unmarerr = decodeOldWinEncod.Decode(&valCurs)
+	if unmarerr != nil {
+		panic(unmarerr)
+	}
+	fmt.Println(len(readFileXml))
+
 
 }
