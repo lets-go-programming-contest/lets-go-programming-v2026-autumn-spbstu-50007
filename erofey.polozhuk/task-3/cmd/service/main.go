@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"flag"
-	"bytes"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
+	"sort"
 	"golang.org/x/net/html/charset"
 	"gopkg.in/yaml.v3"
 )
@@ -22,15 +25,19 @@ type Valute struct{
 	Nominal float64 `xml:"Nominal"`
 	Name string	`xml:"Name"`
 	Value string `xml:"Value"`
+	ValueFloat float64
 }
 type ValCurs struct{
 	Valutbl []Valute `xml:"Valute"`
 }
+func (v *ValCurs) ValCursSOrtBy(i , j int ) bool {
+		return v.Valutbl[i].ValueFloat > v.Valutbl[j].ValueFloat
+}
 
 func main(){
-	whatAflag := flag.String("config", "config.yaml", "path file")
+	whatApath := flag.String("config", "config.yaml", "path file")
 	flag.Parse()
-	readFileYaml, err := os.ReadFile(*whatAflag) 
+	readFileYaml, err := os.ReadFile(*whatApath) 
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +57,16 @@ func main(){
 	if unmarerr != nil {
 		panic(unmarerr)
 	}
-	fmt.Println(len(readFileXml))
-
+	fmt.Println(len(valCurs.Valutbl))
+	for i, _ := range valCurs.Valutbl{
+		val := valCurs.Valutbl[i].Value
+		var errvalf error
+		valCurs.Valutbl[i].ValueFloat, errvalf =  strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
+		if errvalf != nil {
+			panic(errvalf)
+		}
+	}
+	sort.SliceStable(valCurs.Valutbl, valCurs.ValCursSOrtBy)
+	
 
 }
