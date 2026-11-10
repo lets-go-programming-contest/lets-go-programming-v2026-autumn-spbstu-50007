@@ -2,13 +2,16 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"flag"
-	"fmt"
+	"log"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
+
 	"golang.org/x/net/html/charset"
 	"gopkg.in/yaml.v3"
 )
@@ -34,39 +37,66 @@ func (v *ValCurs) ValCursSOrtBy(i , j int ) bool {
 		return v.Valutbl[i].ValueFloat > v.Valutbl[j].ValueFloat
 }
 
+type RezalJson struct{
+	NumCode int `json:"num_code"`
+	CharCode string `json:"char_code"`
+    Value float64 `json:"value"`
+}
+
 func main(){
 	whatApath := flag.String("config", "config.yaml", "path file")
 	flag.Parse()
 	readFileYaml, err := os.ReadFile(*whatApath) 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	var config Config
 	unmarerr:= yaml.Unmarshal(readFileYaml, &config)
 	if unmarerr!=nil{
-		panic(unmarerr)
+		log.Fatal(unmarerr)
 	}
 	readFileXml, errXml := os.ReadFile(config.InputFile)
 	if errXml!=nil {
-		panic(errXml)
+		log.Fatal(errXml)
 	}
 	decodeOldWinEncod := xml.NewDecoder(bytes.NewReader(readFileXml))
 	decodeOldWinEncod.CharsetReader = charset.NewReaderLabel
 	var valCurs ValCurs 
 	unmarerr = decodeOldWinEncod.Decode(&valCurs)
 	if unmarerr != nil {
-		panic(unmarerr)
+		log.Fatal(unmarerr)
 	}
-	fmt.Println(len(valCurs.Valutbl))
-	for i, _ := range valCurs.Valutbl{
+	for i, _ := range valCurs.Valutbl {
 		val := valCurs.Valutbl[i].Value
 		var errvalf error
 		valCurs.Valutbl[i].ValueFloat, errvalf =  strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
 		if errvalf != nil {
-			panic(errvalf)
+			log.Fatal(errvalf)
 		}
 	}
+	var JsonStructs []RezalJson
 	sort.SliceStable(valCurs.Valutbl, valCurs.ValCursSOrtBy)
+	for i := range valCurs.Valutbl{
+		val := valCurs.Valutbl[i].NumCode
+		intZnachNumCode, errNumCode  := strconv.ParseInt(val ,10, 32)
+		if errNumCode != nil {
+			log.Fatal(errNumCode)
+		}
+		lastJson:= RezalJson{NumCode: int(intZnachNumCode), CharCode: valCurs.Valutbl[i].CharCode, Value: valCurs.Valutbl[i].ValueFloat}
+		JsonStructs = append(JsonStructs, lastJson)
+	}
 	
-
+	jsonBytes, errjon := json.MarshalIndent(JsonStructs, "", "  ")
+	if errjon != nil {
+		log.Fatal(errjon)
+	}
+	resDir := filepath.Dir(config.OutputFile)
+	errmkdir := os.MkdirAll(resDir, 0o775)
+	if errmkdir!=nil{
+		log.Fatal(errmkdir)
+	}
+	errWrite := os.WriteFile(config.OutputFile, jsonBytes, 0o644)
+	if errWrite != nil {
+		log.Fatal(errWrite)
+	}
 }
