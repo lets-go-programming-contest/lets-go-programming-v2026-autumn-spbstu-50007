@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"flag"
-
 	"os"
 	"path/filepath"
 	"sort"
@@ -14,6 +13,11 @@ import (
 
 	"golang.org/x/net/html/charset"
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	dirPerm  = 0o750
+	filePerm = 0o600
 )
 
 type Config struct {
@@ -27,7 +31,7 @@ type Valute struct {
 	Nominal    float64 `xml:"Nominal"`
 	Name       string  `xml:"Name"`
 	Value      string  `xml:"Value"`
-	ValueFloat float64
+	ValueFloat float64 `xml:"-"`
 }
 
 type ValCurs struct {
@@ -38,7 +42,7 @@ func (v *ValCurs) ValCursSOrtBy(i, j int) bool {
 	return v.Valutbl[i].ValueFloat > v.Valutbl[j].ValueFloat
 }
 
-type RezalJson struct {
+type RezalJSON struct {
 	NumCode  int     `json:"num_code"`
 	CharCode string  `json:"char_code"`
 	Value    float64 `json:"value"`
@@ -47,12 +51,14 @@ type RezalJson struct {
 func main() {
 	whatApath := flag.String("config", "config.yaml", "path file")
 	flag.Parse()
+
 	readFileYaml, err := os.ReadFile(*whatApath)
 	if err != nil {
 		panic(err)
 	}
 
 	var config Config
+
 	unmarerr := yaml.Unmarshal(readFileYaml, &config)
 	if unmarerr != nil {
 		panic(unmarerr)
@@ -73,23 +79,23 @@ func main() {
 		panic(unmarerr)
 	}
 
-	for i := range valCurs.Valutbl {
-		val := valCurs.Valutbl[i].Value
+	for index := range valCurs.Valutbl {
+		val := valCurs.Valutbl[index].Value
 	
 		var errvalf error
 	
-		valCurs.Valutbl[i].ValueFloat, errvalf = strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
+		valCurs.Valutbl[index].ValueFloat, errvalf = strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
 		if errvalf != nil {
 			panic(errvalf)
 		}
-
 	}
 
-	var JsonStructs []RezalJson
+	jsonStructs := make([]RezalJSON, 0, len(valCurs.Valutbl))
 
 	sort.SliceStable(valCurs.Valutbl, valCurs.ValCursSOrtBy)
-	for i := range valCurs.Valutbl {
-		val := strings.TrimSpace(valCurs.Valutbl[i].NumCode)
+
+	for index := range valCurs.Valutbl {
+		val := strings.TrimSpace(valCurs.Valutbl[index].NumCode)
 
 		var intZnachNumCode int64
 
@@ -101,11 +107,11 @@ func main() {
 			}
 
 		}
-		lastJson := RezalJson{NumCode: int(intZnachNumCode), CharCode: valCurs.Valutbl[i].CharCode, Value: valCurs.Valutbl[i].ValueFloat}
-		JsonStructs = append(JsonStructs, lastJson)
+		lastJson := RezalJSON{NumCode: int(intZnachNumCode), CharCode: valCurs.Valutbl[index].CharCode, Value: valCurs.Valutbl[index].ValueFloat}
+		jsonStructs = append(jsonStructs, lastJson)
 	}
 
-	jsonBytes, errjon := json.MarshalIndent(JsonStructs, "", "  ")
+	jsonBytes, errjon := json.MarshalIndent(jsonStructs, "", "  ")
 	if errjon != nil {
 		panic(errjon)
 	}
@@ -120,5 +126,4 @@ func main() {
 	if errWrite != nil {
 		panic(errWrite)
 	}
-	
 }
