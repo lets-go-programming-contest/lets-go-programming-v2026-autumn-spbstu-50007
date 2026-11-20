@@ -90,18 +90,20 @@ func parseXML(filePath string) ValCurs {
 func processData(valCurs ValCurs) []OutputStruct {
 	result := make([]OutputStruct, 0, len(valCurs.Valutes))
 	for _, data := range valCurs.Valutes {
-		var numCodeInt int 
-
+		numCodeInt := 0
 		trimmedNumCode := strings.TrimSpace(data.NumCode)
+
 		if trimmedNumCode != "" {
-			var err error
-			numCodeInt, err = strconv.Atoi(trimmedNumCode)
+			parseCode, err := strconv.Atoi(trimmedNumCode)
 			if err != nil {
 				panic(err)
 			}
+
+			numCodeInt = parseCode
 		}
 
 		tempString := strings.ReplaceAll(strings.TrimSpace(data.Value), ",", ".")
+
 		valueFloat, err := strconv.ParseFloat(tempString, 64)
 		if err != nil {
 			panic(err)
