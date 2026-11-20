@@ -29,6 +29,7 @@ type Valute struct {
 	Value      string  `xml:"Value"`
 	ValueFloat float64
 }
+
 type ValCurs struct {
 	Valutbl []Valute `xml:"Valute"`
 }
@@ -50,41 +51,55 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	var config Config
 	unmarerr := yaml.Unmarshal(readFileYaml, &config)
 	if unmarerr != nil {
 		panic(unmarerr)
 	}
+
 	readFileXml, errXml := os.ReadFile(config.InputFile)
 	if errXml != nil {
 		panic(errXml)
 	}
+
 	decodeOldWinEncod := xml.NewDecoder(bytes.NewReader(readFileXml))
 	decodeOldWinEncod.CharsetReader = charset.NewReaderLabel
+	
 	var valCurs ValCurs
+	
 	unmarerr = decodeOldWinEncod.Decode(&valCurs)
 	if unmarerr != nil {
 		panic(unmarerr)
 	}
+
 	for i := range valCurs.Valutbl {
 		val := valCurs.Valutbl[i].Value
+	
 		var errvalf error
+	
 		valCurs.Valutbl[i].ValueFloat, errvalf = strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
 		if errvalf != nil {
 			panic(errvalf)
 		}
+
 	}
+
 	var JsonStructs []RezalJson
+
 	sort.SliceStable(valCurs.Valutbl, valCurs.ValCursSOrtBy)
 	for i := range valCurs.Valutbl {
 		val := strings.TrimSpace(valCurs.Valutbl[i].NumCode)
+
 		var intZnachNumCode int64
+
 		if val != "" {
 			var errNumCode error
 			intZnachNumCode, errNumCode = strconv.ParseInt(val, 10, 32)
 			if errNumCode != nil {
 				panic(errNumCode)
 			}
+
 		}
 		lastJson := RezalJson{NumCode: int(intZnachNumCode), CharCode: valCurs.Valutbl[i].CharCode, Value: valCurs.Valutbl[i].ValueFloat}
 		JsonStructs = append(JsonStructs, lastJson)
@@ -94,13 +109,16 @@ func main() {
 	if errjon != nil {
 		panic(errjon)
 	}
+
 	resDir := filepath.Dir(config.OutputFile)
-	errmkdir := os.MkdirAll(resDir, 0o775)
+	errmkdir := os.MkdirAll(resDir, 0o750)
 	if errmkdir != nil {
 		panic(errmkdir)
 	}
-	errWrite := os.WriteFile(config.OutputFile, jsonBytes, 0o644)
+
+	errWrite := os.WriteFile(config.OutputFile, jsonBytes, 0o600)
 	if errWrite != nil {
 		panic(errWrite)
 	}
+	
 }
