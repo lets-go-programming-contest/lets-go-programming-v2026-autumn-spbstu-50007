@@ -41,6 +41,7 @@ type OutputStruct struct {
 
 func parseFlags() string {
 	var configFlag string
+
 	flag.StringVar(&configFlag, "config", "config.yaml", "Enter file name")
 	flag.Parse()
 
@@ -54,10 +55,12 @@ func loadConfig(path string) FilePath {
 	}
 
 	var cfg FilePath
+
 	err = yaml.Unmarshal(yamlFile, &cfg)
 	if err != nil {
 		panic(err)
 	}
+
 	return cfg
 }
 
@@ -66,6 +69,7 @@ func parseXML(filePath string) ValCurs {
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() {
 		_ = xmlFile.Close()
 	}()
@@ -79,20 +83,22 @@ func parseXML(filePath string) ValCurs {
 	if err != nil {
 		panic(err)
 	}
+
 	return valCurs
 }
 
 func processData(valCurs ValCurs) []OutputStruct {
 	result := make([]OutputStruct, 0, len(valCurs.Valutes))
 	for _, data := range valCurs.Valutes {
+		var numCodeInt int 
 
-		if strings.TrimSpace(data.NumCode) == "" {
-			continue
-		}
-
-		numCodeInt, err := strconv.Atoi(strings.TrimSpace(data.NumCode))
-		if err != nil {
-			panic(err)
+		trimmedNumCode := strings.TrimSpace(data.NumCode)
+		if trimmedNumCode != "" {
+			var err error
+			numCodeInt, err = strconv.Atoi(trimmedNumCode)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		tempString := strings.ReplaceAll(strings.TrimSpace(data.Value), ",", ".")
@@ -108,7 +114,6 @@ func processData(valCurs ValCurs) []OutputStruct {
 		}
 
 		result = append(result, temp)
-
 	}
 
 	sort.Slice(result, func(i, j int) bool {
@@ -124,7 +129,9 @@ func saveJSON(outputPath string, result []OutputStruct) {
 		panic(err)
 	}
 
-	err = os.MkdirAll(filepath.Dir(outputPath), 0755)
+	dir := filepath.Dir(outputPath)
+
+	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		panic(err)
 	}
@@ -136,7 +143,6 @@ func saveJSON(outputPath string, result []OutputStruct) {
 }
 
 func main() {
-
 	configPath := parseFlags()
 	cfg := loadConfig(configPath)
 	valCurs := parseXML(cfg.InputFile)
