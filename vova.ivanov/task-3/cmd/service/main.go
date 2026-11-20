@@ -18,6 +18,16 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+const (
+	outputDirMode  = 0o755
+	outputFileMode = 0o600
+)
+
+var (
+	errEmptyPaths          = errors.New("input-file and output-file must be non-empty")
+	errUnsupportedEncoding = errors.New("unsupported XML encoding")
+)
+
 type config struct {
 	InputFile  string `yaml:"input-file"`
 	OutputFile string `yaml:"output-file"`
@@ -78,10 +88,10 @@ func readConfig(path string) (config, error) {
 		return config{}, fmt.Errorf("decode config %q: %w", path, err)
 	}
 
-	cfg.InputFile = strings.TrimSpace(cfg.InputFile)
-	cfg.OutputFile = strings.TrimSpace(cfg.OutputFile)
+	cfg.InputFile, cfg.OutputFile = strings.TrimSpace(cfg.InputFile), strings.TrimSpace(cfg.OutputFile)
+
 	if cfg.InputFile == "" || cfg.OutputFile == "" {
-		return config{}, errors.New("input-file and output-file must be non-empty")
+		return config{}, errEmptyPaths
 	}
 
 	return cfg, nil
@@ -99,7 +109,7 @@ func readCurrencies(path string) ([]currency, error) {
 			return charmap.Windows1251.NewDecoder().Reader(input), nil
 		}
 
-		return nil, fmt.Errorf("unsupported XML encoding: %s", name)
+		return nil, fmt.Errorf("%w: %s", errUnsupportedEncoding, name)
 	}
 
 	var doc xmlDocument
@@ -108,9 +118,12 @@ func readCurrencies(path string) ([]currency, error) {
 	}
 
 	result := make([]currency, 0, len(doc.Currencies))
+
 	for _, item := range doc.Currencies {
-		valueText := strings.ReplaceAll(strings.TrimSpace(item.Value), ",", ".")
-		value, err := strconv.ParseFloat(valueText, 64)
+		value, err := strconv.ParseFloat(
+			strings.ReplaceAll(strings.TrimSpace(item.Value), ",", "."),
+			64,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("parse value for %s: %w", item.CharCode, err)
 		}
@@ -132,11 +145,11 @@ func writeCurrencies(path string, currencies []currency) error {
 	}
 
 	directory := filepath.Dir(path)
-	if err := os.MkdirAll(directory, 0o755); err != nil {
+	if err := os.MkdirAll(directory, outputDirMode); err != nil {
 		return fmt.Errorf("create output directory: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, outputFileMode); err != nil {
 		return fmt.Errorf("write JSON %q: %w", path, err)
 	}
 
