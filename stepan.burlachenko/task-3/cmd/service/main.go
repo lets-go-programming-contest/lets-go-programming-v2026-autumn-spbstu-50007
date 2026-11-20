@@ -39,6 +39,11 @@ type OutputStruct struct {
 	Value    float64 `json:"value"`
 }
 
+const (
+	dirPerm  = 0o755
+	filePerm = 0o600
+)
+
 func parseFlags() string {
 	var configFlag string
 
@@ -132,11 +137,11 @@ func saveJSON(outputPath string, result []OutputStruct) {
 
 	dir := filepath.Dir(outputPath)
 
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, dirPerm); err != nil {
 		panic(err)
 	}
 
-	if err = os.WriteFile(outputPath, jsonResult, 0o600); err != nil {
+	if err = os.WriteFile(outputPath, jsonResult, filePerm); err != nil {
 		panic(err)
 	}
 }
