@@ -58,6 +58,36 @@ func parseNumCode(raw string) int {
 	return int(code)
 }
 
+func parseValues(valCurs *ValCurs) {
+	for index := range valCurs.Valutbl {
+		val := valCurs.Valutbl[index].Value
+
+		var errvalf error
+
+		valCurs.Valutbl[index].ValueFloat, errvalf = strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
+		if errvalf != nil {
+			panic(errvalf)
+		}
+	}
+}
+
+func writeResult(path string, data []RezalJSON) {
+	jsonBytes, errjon := json.MarshalIndent(data, "", "  ")
+	if errjon != nil {
+		panic(errjon)
+	}
+
+	errmkdir := os.MkdirAll(filepath.Dir(path), dirPerm)
+	if errmkdir != nil {
+		panic(errmkdir)
+	}
+
+	errWrite := os.WriteFile(path, jsonBytes, filePerm)
+	if errWrite != nil {
+		panic(errWrite)
+	}
+}
+
 func main() {
 	whatApath := flag.String("config", "config.yaml", "path file")
 	flag.Parse()
@@ -89,22 +119,13 @@ func main() {
 		panic(unmarerr)
 	}
 
-	for index := range valCurs.Valutbl {
-		val := valCurs.Valutbl[index].Value
-
-		var errvalf error
-
-		valCurs.Valutbl[index].ValueFloat, errvalf = strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
-		if errvalf != nil {
-			panic(errvalf)
-		}
-	}
-
-	jsonStructs := make([]RezalJSON, 0, len(valCurs.Valutbl))
+	parseValues(&valCurs)
 
 	sort.SliceStable(valCurs.Valutbl, func(left, right int) bool {
 		return valCurs.Valutbl[left].ValueFloat > valCurs.Valutbl[right].ValueFloat
 	})
+
+	jsonStructs := make([]RezalJSON, 0, len(valCurs.Valutbl))
 
 	for index := range valCurs.Valutbl {
 		lastJSON := RezalJSON{
@@ -115,20 +136,5 @@ func main() {
 		jsonStructs = append(jsonStructs, lastJSON)
 	}
 
-	jsonBytes, errjon := json.MarshalIndent(jsonStructs, "", "  ")
-	if errjon != nil {
-		panic(errjon)
-	}
-
-	resDir := filepath.Dir(config.OutputFile)
-
-	errmkdir := os.MkdirAll(resDir, dirPerm)
-	if errmkdir != nil {
-		panic(errmkdir)
-	}
-
-	errWrite := os.WriteFile(config.OutputFile, jsonBytes, filePerm)
-	if errWrite != nil {
-		panic(errWrite)
-	}
+	writeResult(config.OutputFile, jsonStructs)
 }
