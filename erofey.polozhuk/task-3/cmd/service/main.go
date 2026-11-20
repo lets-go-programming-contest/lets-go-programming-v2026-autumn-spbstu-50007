@@ -38,10 +38,6 @@ type ValCurs struct {
 	Valutbl []Valute `xml:"Valute"`
 }
 
-func (v *ValCurs) ValCursSOrtBy(i, j int) bool {
-	return v.Valutbl[i].ValueFloat > v.Valutbl[j].ValueFloat
-}
-
 type RezalJSON struct {
 	NumCode  int     `json:"num_code"`
 	CharCode string  `json:"char_code"`
@@ -106,7 +102,9 @@ func main() {
 
 	jsonStructs := make([]RezalJSON, 0, len(valCurs.Valutbl))
 
-	sort.SliceStable(valCurs.Valutbl, valCurs.ValCursSOrtBy)
+	sort.SliceStable(valCurs.Valutbl, func(left, right int) bool {
+		return valCurs.Valutbl[left].ValueFloat > valCurs.Valutbl[right].ValueFloat
+	})
 
 	for index := range valCurs.Valutbl {
 		lastJSON := RezalJSON{
