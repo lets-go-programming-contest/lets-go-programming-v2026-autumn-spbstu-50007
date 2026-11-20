@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"flag"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -15,17 +12,12 @@ import (
 	"strings"
 
 	"go.yaml.in/yaml/v3"
-	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/net/html/charset"
 )
 
 const (
-	outputDirMode  = 0o755
-	outputFileMode = 0o600
-)
-
-var (
-	errEmptyPaths          = errors.New("input-file and output-file must be non-empty")
-	errUnsupportedEncoding = errors.New("unsupported XML encoding")
+	dirPerm  = 0o750
+	filePerm = 0o600
 )
 
 type config struct {
@@ -39,9 +31,9 @@ type xmlCurrency struct {
 	Value    string `xml:"Value"`
 }
 
-type xmlDocument struct {
-	XMLName    xml.Name      `xml:"ValCurs"`
-	Currencies []xmlCurrency `xml:"Valute"`
+type xmlRates struct {
+	XMLName xml.Name      `xml:"ValCurs"`
+	Items   []xmlCurrency `xml:"Valute"`
 }
 
 type currency struct {
@@ -51,107 +43,92 @@ type currency struct {
 }
 
 func main() {
-	configPath := flag.String("config", "", "path to YAML config")
+	configPath := flag.String("config", "", "path to config file")
 	flag.Parse()
 
 	if *configPath == "" {
 		panic("specify a YAML file with -config")
 	}
 
-	cfg, err := readConfig(*configPath)
-	if err != nil {
-		panic(err)
-	}
+	cfg := readConfig(*configPath)
+	rates := readRates(cfg.InputFile)
 
-	currencies, err := readCurrencies(cfg.InputFile)
-	if err != nil {
-		panic(err)
-	}
-
-	sort.SliceStable(currencies, func(i, j int) bool {
-		return currencies[i].Value > currencies[j].Value
+	sort.Slice(rates, func(i, j int) bool {
+		return rates[i].Value > rates[j].Value
 	})
 
-	if err := writeCurrencies(cfg.OutputFile, currencies); err != nil {
-		panic(err)
-	}
+	writeJSON(cfg.OutputFile, rates)
 }
 
-func readConfig(path string) (config, error) {
+func readConfig(path string) config {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return config{}, fmt.Errorf("read config %q: %w", path, err)
+		panic(err)
 	}
 
 	var cfg config
+
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return config{}, fmt.Errorf("decode config %q: %w", path, err)
+		panic(err)
 	}
 
 	cfg.InputFile, cfg.OutputFile = strings.TrimSpace(cfg.InputFile), strings.TrimSpace(cfg.OutputFile)
 
 	if cfg.InputFile == "" || cfg.OutputFile == "" {
-		return config{}, errEmptyPaths
+		panic("input-file and output-file must be specified")
 	}
 
-	return cfg, nil
+	return cfg
 }
 
-func readCurrencies(path string) ([]currency, error) {
+func readRates(path string) []currency {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read XML %q: %w", path, err)
+		panic(err)
 	}
 
 	decoder := xml.NewDecoder(bytes.NewReader(data))
-	decoder.CharsetReader = func(name string, input io.Reader) (io.Reader, error) {
-		if strings.EqualFold(name, "windows-1251") {
-			return charmap.Windows1251.NewDecoder().Reader(input), nil
-		}
+	decoder.CharsetReader = charset.NewReaderLabel
 
-		return nil, fmt.Errorf("%w: %s", errUnsupportedEncoding, name)
+	var document xmlRates
+
+	if err := decoder.Decode(&document); err != nil {
+		panic(err)
 	}
 
-	var doc xmlDocument
-	if err := decoder.Decode(&doc); err != nil {
-		return nil, fmt.Errorf("decode XML %q: %w", path, err)
-	}
+	rates := make([]currency, 0, len(document.Items))
 
-	result := make([]currency, 0, len(doc.Currencies))
+	for _, item := range document.Items {
+		valueText := strings.ReplaceAll(strings.TrimSpace(item.Value), ",", ".")
 
-	for _, item := range doc.Currencies {
-		value, err := strconv.ParseFloat(
-			strings.ReplaceAll(strings.TrimSpace(item.Value), ",", "."),
-			64,
-		)
+		value, err := strconv.ParseFloat(valueText, 64)
 		if err != nil {
-			return nil, fmt.Errorf("parse value for %s: %w", item.CharCode, err)
+			panic(err)
 		}
 
-		result = append(result, currency{
+		rates = append(rates, currency{
 			NumCode:  item.NumCode,
 			CharCode: strings.TrimSpace(item.CharCode),
 			Value:    value,
 		})
 	}
 
-	return result, nil
+	return rates
 }
 
-func writeCurrencies(path string, currencies []currency) error {
-	data, err := json.MarshalIndent(currencies, "", "    ")
+func writeJSON(path string, rates []currency) {
+	data, err := json.MarshalIndent(rates, "", "    ")
 	if err != nil {
-		return fmt.Errorf("encode JSON: %w", err)
+		panic(err)
 	}
 
-	directory := filepath.Dir(path)
-	if err := os.MkdirAll(directory, outputDirMode); err != nil {
-		return fmt.Errorf("create output directory: %w", err)
+	dir := filepath.Dir(path)
+
+	if err := os.MkdirAll(dir, dirPerm); err != nil {
+		panic(err)
 	}
 
-	if err := os.WriteFile(path, data, outputFileMode); err != nil {
-		return fmt.Errorf("write JSON %q: %w", path, err)
+	if err := os.WriteFile(path, data, filePerm); err != nil {
+		panic(err)
 	}
-
-	return nil
 }
