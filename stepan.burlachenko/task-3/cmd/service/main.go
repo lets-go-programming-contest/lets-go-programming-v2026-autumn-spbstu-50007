@@ -56,8 +56,7 @@ func loadConfig(path string) FilePath {
 
 	var cfg FilePath
 
-	err = yaml.Unmarshal(yamlFile, &cfg)
-	if err != nil {
+	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
 		panic(err)
 	}
 
@@ -79,8 +78,7 @@ func parseXML(filePath string) ValCurs {
 
 	var valCurs ValCurs
 
-	err = decoder.Decode(&valCurs)
-	if err != nil {
+	if err := decoder.Decode(&valCurs); err != nil {
 		panic(err)
 	}
 
@@ -89,6 +87,7 @@ func parseXML(filePath string) ValCurs {
 
 func processData(valCurs ValCurs) []OutputStruct {
 	result := make([]OutputStruct, 0, len(valCurs.Valutes))
+
 	for _, data := range valCurs.Valutes {
 		numCodeInt := 0
 		trimmedNumCode := strings.TrimSpace(data.NumCode)
@@ -126,20 +125,18 @@ func processData(valCurs ValCurs) []OutputStruct {
 }
 
 func saveJSON(outputPath string, result []OutputStruct) {
-	jsonResult, err := json.MarshalIndent(result, "", "	")
+	jsonResult, err := json.MarshalIndent(result, "", "\t")
 	if err != nil {
 		panic(err)
 	}
 
 	dir := filepath.Dir(outputPath)
 
-	err = os.MkdirAll(dir, 0755)
-	if err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		panic(err)
 	}
 
-	err = os.WriteFile(outputPath, jsonResult, 0600)
-	if err != nil {
+	if err = os.WriteFile(outputPath, jsonResult, 0600); err != nil {
 		panic(err)
 	}
 }
