@@ -48,6 +48,20 @@ type RezalJSON struct {
 	Value    float64 `json:"value"`
 }
 
+func parseNumCode(raw string) int {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0
+	}
+
+	code, err := strconv.ParseInt(raw, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	return int(code)
+}
+
 func main() {
 	whatApath := flag.String("config", "config.yaml", "path file")
 	flag.Parse()
@@ -64,16 +78,16 @@ func main() {
 		panic(unmarerr)
 	}
 
-	readFileXml, errXml := os.ReadFile(config.InputFile)
-	if errXml != nil {
-		panic(errXml)
+	readFileXML, errXML := os.ReadFile(config.InputFile)
+	if errXML != nil {
+		panic(errXML)
 	}
 
-	decodeOldWinEncod := xml.NewDecoder(bytes.NewReader(readFileXml))
+	decodeOldWinEncod := xml.NewDecoder(bytes.NewReader(readFileXML))
 	decodeOldWinEncod.CharsetReader = charset.NewReaderLabel
-	
+
 	var valCurs ValCurs
-	
+
 	unmarerr = decodeOldWinEncod.Decode(&valCurs)
 	if unmarerr != nil {
 		panic(unmarerr)
@@ -81,9 +95,9 @@ func main() {
 
 	for index := range valCurs.Valutbl {
 		val := valCurs.Valutbl[index].Value
-	
+
 		var errvalf error
-	
+
 		valCurs.Valutbl[index].ValueFloat, errvalf = strconv.ParseFloat(strings.ReplaceAll(val, ",", "."), 64)
 		if errvalf != nil {
 			panic(errvalf)
@@ -95,20 +109,12 @@ func main() {
 	sort.SliceStable(valCurs.Valutbl, valCurs.ValCursSOrtBy)
 
 	for index := range valCurs.Valutbl {
-		val := strings.TrimSpace(valCurs.Valutbl[index].NumCode)
-
-		var intZnachNumCode int64
-
-		if val != "" {
-			var errNumCode error
-			intZnachNumCode, errNumCode = strconv.ParseInt(val, 10, 32)
-			if errNumCode != nil {
-				panic(errNumCode)
-			}
-
+		lastJSON := RezalJSON{
+			NumCode:  parseNumCode(valCurs.Valutbl[index].NumCode),
+			CharCode: valCurs.Valutbl[index].CharCode,
+			Value:    valCurs.Valutbl[index].ValueFloat,
 		}
-		lastJson := RezalJSON{NumCode: int(intZnachNumCode), CharCode: valCurs.Valutbl[index].CharCode, Value: valCurs.Valutbl[index].ValueFloat}
-		jsonStructs = append(jsonStructs, lastJson)
+		jsonStructs = append(jsonStructs, lastJSON)
 	}
 
 	jsonBytes, errjon := json.MarshalIndent(jsonStructs, "", "  ")
@@ -117,12 +123,13 @@ func main() {
 	}
 
 	resDir := filepath.Dir(config.OutputFile)
-	errmkdir := os.MkdirAll(resDir, 0o750)
+
+	errmkdir := os.MkdirAll(resDir, dirPerm)
 	if errmkdir != nil {
 		panic(errmkdir)
 	}
 
-	errWrite := os.WriteFile(config.OutputFile, jsonBytes, 0o600)
+	errWrite := os.WriteFile(config.OutputFile, jsonBytes, filePerm)
 	if errWrite != nil {
 		panic(errWrite)
 	}
