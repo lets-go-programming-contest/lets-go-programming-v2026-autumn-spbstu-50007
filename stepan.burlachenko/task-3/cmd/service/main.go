@@ -39,30 +39,38 @@ type OutputStruct struct {
 	Value    float64 `json:"value"`
 }
 
-func main() {
-
+func parseFlags() string {
 	var configFlag string
 	flag.StringVar(&configFlag, "config", "config.yaml", "Enter file name")
 	flag.Parse()
 
-	YamlFile, err := os.ReadFile(configFlag)
+	return configFlag
+}
+
+func loadConfig(path string) FilePath {
+	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
 
-	var path FilePath
-	err = yaml.Unmarshal(YamlFile, &path)
+	var cfg FilePath
+	err = yaml.Unmarshal(yamlFile, &cfg)
 	if err != nil {
 		panic(err)
 	}
+	return cfg
+}
 
-	XMLFile, err := os.Open(path.InputFile)
+func parseXML(filePath string) ValCurs {
+	xmlFile, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
 	}
-	defer XMLFile.Close()
+	defer func() {
+		_ = xmlFile.Close()
+	}()
 
-	decoder := xml.NewDecoder(XMLFile)
+	decoder := xml.NewDecoder(xmlFile)
 	decoder.CharsetReader = charset.NewReaderLabel
 
 	var valCurs ValCurs
@@ -71,9 +79,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	return valCurs
+}
 
-	var result []OutputStruct
+func processData(valCurs ValCurs) []OutputStruct {
+	result := make([]OutputStruct, 0, len(valCurs.Valutes))
 	for _, data := range valCurs.Valutes {
+
+		if strings.TrimSpace(data.NumCode) == "" {
+			continue
+		}
 
 		numCodeInt, err := strconv.Atoi(strings.TrimSpace(data.NumCode))
 		if err != nil {
@@ -81,7 +96,7 @@ func main() {
 		}
 
 		tempString := strings.ReplaceAll(strings.TrimSpace(data.Value), ",", ".")
-		valueInt, err := strconv.ParseFloat(tempString, 64)
+		valueFloat, err := strconv.ParseFloat(tempString, 64)
 		if err != nil {
 			panic(err)
 		}
@@ -89,7 +104,7 @@ func main() {
 		temp := OutputStruct{
 			NumCode:  numCodeInt,
 			CharCode: strings.TrimSpace(data.CharCode),
-			Value:    valueInt,
+			Value:    valueFloat,
 		}
 
 		result = append(result, temp)
@@ -100,18 +115,31 @@ func main() {
 		return result[i].Value > result[j].Value
 	})
 
+	return result
+}
+
+func saveJSON(outputPath string, result []OutputStruct) {
 	jsonResult, err := json.MarshalIndent(result, "", "	")
 	if err != nil {
 		panic(err)
 	}
 
-	err = os.MkdirAll(filepath.Dir(path.OutputFile), 0755)
+	err = os.MkdirAll(filepath.Dir(outputPath), 0755)
 	if err != nil {
 		panic(err)
 	}
 
-	err = os.WriteFile(path.OutputFile, jsonResult, 0644)
+	err = os.WriteFile(outputPath, jsonResult, 0600)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
+
+	configPath := parseFlags()
+	cfg := loadConfig(configPath)
+	valCurs := parseXML(cfg.InputFile)
+	result := processData(valCurs)
+	saveJSON(cfg.OutputFile, result)
 }
