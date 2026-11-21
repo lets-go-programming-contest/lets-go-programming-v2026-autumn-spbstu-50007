@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/html/charset"
+	"golang.org/x/text/encoding/charmap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -56,6 +57,14 @@ func parseNumCode(raw string) int {
 	}
 
 	return int(code)
+}
+
+func charsetReader(label string, input io.Reader) (io.Reader, error) {
+	if strings.EqualFold(label, "windows-1251") {
+		return charmap.Windows1251.NewDecoder().Reader(input), nil
+	}
+
+	return input, nil
 }
 
 func parseValues(valCurs *ValCurs) {
@@ -110,7 +119,7 @@ func main() {
 	}
 
 	decodeOldWinEncod := xml.NewDecoder(bytes.NewReader(readFileXML))
-	decodeOldWinEncod.CharsetReader = charset.NewReaderLabel
+	decodeOldWinEncod.CharsetReader = charsetReader
 
 	var valCurs ValCurs
 
