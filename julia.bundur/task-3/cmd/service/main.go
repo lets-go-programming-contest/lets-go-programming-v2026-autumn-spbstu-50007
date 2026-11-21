@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/html/charset"
+	"golang.org/x/text/encoding/charmap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -84,7 +85,9 @@ func loadCurrencies(path string) []Currency {
 	defer src.Close()
 
 	dec := xml.NewDecoder(src)
-	dec.CharsetReader = charset.NewReaderLabel
+	dec.CharsetReader = func(_ string, input io.Reader) (io.Reader, error) {
+		return charmap.Windows1251.NewDecoder().Reader(input), nil
+	}
 
 	var bulletin Bulletin
 	if err := dec.Decode(&bulletin); err != nil {
