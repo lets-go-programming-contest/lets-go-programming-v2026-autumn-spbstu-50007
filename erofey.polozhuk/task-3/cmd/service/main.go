@@ -59,8 +59,8 @@ func parseNumCode(raw string) int {
 	return int(code)
 }
 
-func charsetReader(label string, input io.Reader) (io.Reader, error) {
-	if strings.EqualFold(label, "windows-1251") {
+func charsetReader(thething string, input io.Reader) (io.Reader, error) {
+	if strings.EqualFold(thething, "windows-1251") {
 		return charmap.Windows1251.NewDecoder().Reader(input), nil
 	}
 
