@@ -84,7 +84,7 @@ func loadCurrencies(path string) []Currency {
 	defer src.Close()
 
 	dec := xml.NewDecoder(src)
-	dec.CharsetReader = charset.NewReaderLabel // файлы в windows-1251
+	dec.CharsetReader = charset.NewReaderLabel
 
 	var bulletin Bulletin
 	if err := dec.Decode(&bulletin); err != nil {
