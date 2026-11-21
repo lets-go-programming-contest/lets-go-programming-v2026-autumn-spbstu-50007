@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"flag"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,6 +15,8 @@ import (
 	"golang.org/x/text/encoding/charmap"
 	"gopkg.in/yaml.v3"
 )
+
+const dirPermissions = 0o755
 
 type AppConfig struct {
 	SourcePath string `yaml:"input-file"`
@@ -27,7 +30,7 @@ func (r *Rate) UnmarshalText(text []byte) error {
 
 	number, err := strconv.ParseFloat(clean, 64)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse rate %q: %w", clean, err)
 	}
 
 	*r = Rate(number)
@@ -36,9 +39,9 @@ func (r *Rate) UnmarshalText(text []byte) error {
 }
 
 type Currency struct {
-	Numeric int    `xml:"NumCode"  json:"num_code"`
-	Letters string `xml:"CharCode" json:"char_code"`
-	Amount  Rate   `xml:"Value"    json:"value"`
+	Numeric int    `json:"num_code"  xml:"NumCode"`
+	Letters string `json:"char_code" xml:"CharCode"`
+	Amount  Rate   `json:"value"     xml:"Value"`
 }
 
 type Bulletin struct {
@@ -82,7 +85,12 @@ func loadCurrencies(path string) []Currency {
 	if err != nil {
 		panic(err)
 	}
-	defer src.Close()
+
+	defer func() {
+		if closeErr := src.Close(); closeErr != nil {
+			panic(closeErr)
+		}
+	}()
 
 	dec := xml.NewDecoder(src)
 	dec.CharsetReader = func(_ string, input io.Reader) (io.Reader, error) {
@@ -98,7 +106,7 @@ func loadCurrencies(path string) []Currency {
 }
 
 func saveCurrencies(path string, currencies []Currency) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), dirPermissions); err != nil {
 		panic(err)
 	}
 
@@ -106,7 +114,12 @@ func saveCurrencies(path string, currencies []Currency) {
 	if err != nil {
 		panic(err)
 	}
-	defer dst.Close()
+
+	defer func() {
+		if closeErr := dst.Close(); closeErr != nil {
+			panic(closeErr)
+		}
+	}()
 
 	enc := json.NewEncoder(dst)
 	enc.SetIndent("", "    ")
