@@ -1,0 +1,17 @@
+[
+    {
+        "num_code": 826,
+        "char_code": "GBP",
+        "value": 43.8254
+    },
+    {
+        "num_code": 840,
+        "char_code": "USD",
+        "value": 31.7845
+    },
+    {
+        "num_code": 978,
+        "char_code": "EUR",
+        "value": 28.3621
+    }
+]

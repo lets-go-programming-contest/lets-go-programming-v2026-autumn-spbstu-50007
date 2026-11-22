@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<ValCurs Date="02.03.2002">
+    <Valute ID="R01235">
+        <NumCode>840</NumCode>
+        <CharCode>USD</CharCode>
+        <Value>31,7845</Value>
+    </Valute>
+    <Valute ID="R01239">
+        <NumCode>978</NumCode>
+        <CharCode>EUR</CharCode>
+        <Value>28,3621</Value>
+    </Valute>
+    <Valute ID="R01215">
+        <NumCode>826</NumCode>
+        <CharCode>GBP</CharCode>
+        <Value>43,8254</Value>
+    </Valute>
+</ValCurs>
